@@ -17,3 +17,5 @@ res = loanTape.groupby(['LoanStatus2'])[['CurrentRate','OriginalPayment']].agg(
     wtAvgRate = ('CurrentRate',lambda x: 0 if loanTape.loc[x.index, 'OriginalPayment'].sum() == 0 else np.average(x, weights = loanTape.loc[x.index, 'OriginalPayment'])),
     avgRate = ('CurrentRate',np.mean)
     )
+
+a = 1
