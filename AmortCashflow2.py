@@ -136,3 +136,22 @@ for i, row in cashflow.iterrows():
         cashflow.at[i, "netIntCF"] = (
                     cashflow.at[i, "intCF"] - cashflow.at[i, "servicingFees"]
                 )
+
+# - prepare typical calculation of risk metrics: yield, wal, total pnl, cnl, loss to liquidation, payment window, moic, 
+def investmentCF(x):
+    if x['period'] == 0:
+        return -100 / 100.0 * x['eopBal']
+    else:
+        return x['netIntCF'] + x['prinCF']
+
+cashflow.loc[:,'investment'] = cashflow.loc[:,['netIntCF', 'prinCF', 'eopBal', 'period']].apply(lambda x: investmentCF(x), axis = 1)
+yld = npf.irr(cashflow["investment"].values) * 12
+wal = sum(cashflow['prinCF'] * cashflow['period']) / cashflow['prinCF'].sum() / 12.0
+totalPnL = cashflow["investment"].sum()
+cnl = cashflow['lossPrin'].sum() / cashflow['eopBal'].iloc[0]
+lossToLiquidation = cashflow['lossPrin'].cumsum() / (cashflow['eopBal'].iloc[0] - cashflow['eopBal'])
+moic = (totalPnL + cashflow['eopBal'].iloc[0]) / cashflow['eopBal'].iloc[0]
+breakevenPeriod = cashflow.loc[(cashflow['investment'].cumsum() > 0).idxmax(), 'period']
+paymentWindow = str(cashflow.loc[cashflow['prinCF']>0, 'period'].head(1).values[0]) \
+    + "-" \
+        + str(cashflow.loc[cashflow['prinCF']>0, 'period'].tail(1).values[0])
